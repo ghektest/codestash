@@ -6,7 +6,9 @@ on:
 
 jobs:
   claude-review:
-    if: github.event.pull_request.draft == false
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login == 'Tanq16'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
