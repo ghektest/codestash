@@ -85,7 +85,7 @@ export interface SyncReport {
 }
 
 // Supported languages for syntax detection
-var SUPPORTED_LANGUAGES = [
+const SUPPORTED_LANGUAGES = [
   "typescript",
   "javascript",
   "python",
@@ -106,6 +106,7 @@ var SUPPORTED_LANGUAGES = [
   "yaml",
   "toml",
   "markdown",
+  "dockerfile",
 ] as const;
 
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -114,7 +115,7 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
  * Detect language from file extension.
  */
 export function detectLanguage(filename: string): SupportedLanguage | undefined {
-  var extensionMap: Record<string, SupportedLanguage> = {
+  const extensionMap: Record<string, SupportedLanguage> = {
     ".ts": "typescript",
     ".tsx": "typescript",
     ".js": "javascript",
@@ -143,9 +144,17 @@ export function detectLanguage(filename: string): SupportedLanguage | undefined 
     ".yaml": "yaml",
     ".toml": "toml",
     ".md": "markdown",
+    "Dockerfile": "dockerfile",
+    ".dockerfile": "dockerfile",
   }
 
-  var ext = filename.slice(filename.lastIndexOf("."));
+  // Handle extensionless files like Dockerfile
+  const basename = filename.slice(filename.lastIndexOf("/") + 1);
+  if (extensionMap[basename]) {
+    return extensionMap[basename];
+  }
+
+  const ext = filename.slice(filename.lastIndexOf("."));
   return extensionMap[ext.toLowerCase()];
 }
 
@@ -160,6 +169,7 @@ export function languageLabel(lang: string): string {
     rust: "Rust",
     go: "Go",
     cpp: "C++",
+    dockerfile: "Dockerfile",
   }
   return labels[lang] || lang.charAt(0).toUpperCase() + lang.slice(1);
 }
