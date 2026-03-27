@@ -1,0 +1,55 @@
+name: Claude Code Review
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, reopened]
+
+jobs:
+  claude-review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      actions: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.pull_request.number }}/merge
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_non_write_users: "*"
+          use_sticky_comment: true
+
+          claude_args: |
+            --allowedTools "Read,Glob,Grep,Bash(npm:*),Bash(npx:*),Bash(git:*)"
+
+          prompt: |
+            You are a senior engineer reviewing a pull request for the CodeStash project.
+
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            PR TITLE: ${{ github.event.pull_request.title }}
+
+            Review the PR diff and provide feedback on:
+            - Bugs, logic errors, or potential runtime issues
+            - Security concerns
+            - Breaking changes to the CLI interface
+
+            Keep your review concise. If the code looks good, say so briefly.

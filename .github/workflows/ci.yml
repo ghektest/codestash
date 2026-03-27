@@ -1,0 +1,28 @@
+name: CI - Lint & Type Check
+
+on:
+  pull_request:
+
+jobs:
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Biome lint & format check
+        run: npx biome check src/
+
+      - name: Run TypeScript type checking
+        run: npx tsc --noEmit

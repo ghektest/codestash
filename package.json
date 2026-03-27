@@ -1,0 +1,60 @@
+{
+  "name": "codestash",
+  "version": "0.4.2",
+  "description": "A local-first CLI tool for saving, searching, and syncing code snippets across machines",
+  "main": "dist/index.js",
+  "bin": {
+    "codestash": "dist/cli.js",
+    "cs": "dist/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli.ts",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run check && npm run build"
+  },
+  "keywords": [
+    "snippets",
+    "code-snippets",
+    "cli",
+    "developer-tools",
+    "search",
+    "local-first",
+    "sync"
+  ],
+  "author": "CodeStash Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codestash-dev/codestash.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.6.0",
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "conf": "^13.0.1",
+    "fast-glob": "^3.3.2",
+    "fuse.js": "^7.0.0",
+    "nanoid": "^5.0.7",
+    "ora": "^8.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
