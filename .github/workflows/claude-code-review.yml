@@ -39,6 +39,7 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           allowed_non_write_users: "*"
           use_sticky_comment: true
+          show_full_output: true
 
           claude_args: |
             --allowedTools "Read,Glob,Grep,Bash(npm:*),Bash(npx:*),Bash(git:*)"
