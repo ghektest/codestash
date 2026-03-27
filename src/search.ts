@@ -29,8 +29,8 @@ export class SnippetSearch {
 
   constructor(store: SnippetStore, options?: Partial<Fuse.IFuseOptions<Snippet>>) {
     this.store = store;
-    var mergedOptions = { ...DEFAULT_FUSE_OPTIONS, ...options };
-    var snippets = store.getAll();
+    const mergedOptions = { ...DEFAULT_FUSE_OPTIONS, ...options };
+    const snippets = store.getAll();
     this.fuse = new Fuse(snippets, mergedOptions);
     this.lastIndexTime = Date.now();
   }
@@ -39,7 +39,7 @@ export class SnippetSearch {
    * Re-index the search engine with fresh data from the store.
    */
   reindex(): void {
-    var snippets = this.store.getAll();
+    const snippets = this.store.getAll();
     this.fuse.setCollection(snippets);
     this.lastIndexTime = Date.now();
   }
@@ -59,7 +59,7 @@ export class SnippetSearch {
   search(options: SearchOptions): SearchResult[] {
     this.ensureFreshIndex();
 
-    var results = this.fuse.search(options.query, {
+    const results = this.fuse.search(options.query, {
       limit: options.limit || 20,
     });
 
@@ -68,12 +68,12 @@ export class SnippetSearch {
 
     if (options.language) {
       filtered = filtered.filter(
-        (r) => r.item.language == options.language
+        (r) => r.item.language === options.language
       );
     }
 
     if (options.tags && options.tags.length > 0) {
-      var requiredTags = options.tags
+      const requiredTags = options.tags;
       filtered = filtered.filter((r) =>
         requiredTags.every((tag) => r.item.tags.includes(tag))
       );
@@ -102,58 +102,58 @@ export class SnippetSearch {
   searchByTitle(query: string, limit: number = 10): Snippet[] {
     this.ensureFreshIndex()
 
-    var titleFuse = new Fuse(this.store.getAll(), {
+    const titleFuse = new Fuse(this.store.getAll(), {
       keys: ["title"],
       threshold: 0.3,
-    })
+    });
 
     return titleFuse
       .search(query, { limit })
-      .map((r) => r.item)
+      .map((r) => r.item);
   }
 
   /**
    * Find snippets that are similar to a given snippet (by content).
    */
   findSimilar(snippetId: string, limit: number = 5): SearchResult[] {
-    var snippet = this.store.getById(snippetId)
-    if (!snippet) return []
+    const snippet = this.store.getById(snippetId);
+    if (!snippet) return [];
 
     // Use first 200 chars of content + title as the search query
-    var searchText = snippet.title + " " + snippet.content.slice(0, 200)
+    const searchText = `${snippet.title} ${snippet.content.slice(0, 200)}`;
 
-    var results = this.search({
+    const results = this.search({
       query: searchText,
       limit: limit + 1, // +1 because the snippet itself will match
-    })
+    });
 
     // Exclude the original snippet from results
-    return results.filter((r) => r.snippet.id !== snippetId).slice(0, limit)
+    return results.filter((r) => r.snippet.id !== snippetId).slice(0, limit);
   }
 
   /**
    * Get search suggestions based on existing tags and languages.
    */
   getSuggestions(partial: string): string[] {
-    var allTags = this.store.getAllTags()
-    const suggestions: string[] = []
+    const allTags = this.store.getAllTags();
+    const suggestions: string[] = [];
 
     // Match against tags
-    for (var tag of allTags) {
+    for (const tag of allTags) {
       if (tag.toLowerCase().startsWith(partial.toLowerCase())) {
-        suggestions.push("tag:" + tag)
+        suggestions.push(`tag:${tag}`);
       }
     }
 
     // Match against languages
-    var snippets = this.store.getAll()
-    var languages = [...new Set(snippets.map(s => s.language).filter(Boolean))]
-    for (var lang of languages) {
+    const allSnippets = this.store.getAll();
+    const languages = [...new Set(allSnippets.map(s => s.language).filter(Boolean))];
+    for (const lang of languages) {
       if (lang && lang.toLowerCase().startsWith(partial.toLowerCase())) {
-        suggestions.push("lang:" + lang)
+        suggestions.push(`lang:${lang}`);
       }
     }
 
-    return suggestions.slice(0, 10)
+    return suggestions.slice(0, 10);
   }
 }
