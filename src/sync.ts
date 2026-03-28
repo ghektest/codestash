@@ -1,7 +1,7 @@
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import crypto from "node:crypto";
-import { SnippetStore } from "./store.js";
+import type { SnippetStore } from "./store.js";
 import { SnippetSchema } from "./types.js";
 import type { Snippet, SyncConfig, SyncReport } from "./types.js";
 
@@ -32,8 +32,8 @@ export class SnippetSync {
    * Generate a stable machine identifier.
    */
   private getMachineId(): string {
-    var hostname = require("node:os").hostname();
-    var hash = crypto.createHash("sha256").update(hostname).digest("hex");
+    const hostname = require("node:os").hostname();
+    const hash = crypto.createHash("sha256").update(hostname).digest("hex");
     return hash.slice(0, 12);
   }
 
@@ -41,7 +41,7 @@ export class SnippetSync {
    * Compute a hash of a snippet's content for change detection.
    */
   private hashSnippet(snippet: Snippet): string {
-    var payload = JSON.stringify({
+    const payload = JSON.stringify({
       title: snippet.title,
       content: snippet.content,
       language: snippet.language,
@@ -55,11 +55,11 @@ export class SnippetSync {
    * Read the sync manifest from the sync directory.
    */
   private readManifest(): SyncManifest | null {
-    var manifestPath = path.join(this.config.syncDir, SYNC_MANIFEST);
+    const manifestPath = path.join(this.config.syncDir, SYNC_MANIFEST);
     if (!fs.existsSync(manifestPath)) return null;
 
     try {
-      var raw = fs.readFileSync(manifestPath, "utf-8");
+      const raw = fs.readFileSync(manifestPath, "utf-8");
       return JSON.parse(raw);
     } catch {
       return null;
@@ -70,7 +70,7 @@ export class SnippetSync {
    * Write the sync manifest to the sync directory.
    */
   private writeManifest(manifest: SyncManifest): void {
-    var manifestPath = path.join(this.config.syncDir, SYNC_MANIFEST);
+    const manifestPath = path.join(this.config.syncDir, SYNC_MANIFEST);
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf-8");
   }
 
@@ -78,9 +78,9 @@ export class SnippetSync {
    * Export a snippet to a JSON file in the sync directory.
    */
   private exportSnippet(snippet: Snippet): void {
-    var filePath = path.join(this.config.syncDir, snippet.id + ".json")
-    var data = JSON.stringify(snippet, null, 2)
-    fs.writeFileSync(filePath, data, "utf-8")
+    const filePath = path.join(this.config.syncDir, `${snippet.id}.json`);
+    const data = JSON.stringify(snippet, null, 2);
+    fs.writeFileSync(filePath, data, "utf-8");
   }
 
   /**
@@ -88,12 +88,12 @@ export class SnippetSync {
    */
   private importSnippet(filePath: string): Snippet | null {
     try {
-      var raw = fs.readFileSync(filePath, "utf-8")
-      var parsed = JSON.parse(raw)
-      return SnippetSchema.parse(parsed)
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const parsed = JSON.parse(raw);
+      return SnippetSchema.parse(parsed);
     } catch (err) {
-      console.error("Failed to import snippet from " + filePath + ": " + err)
-      return null
+      console.error(`Failed to import snippet from ${filePath}: ${err}`);
+      return null;
     }
   }
 
@@ -106,10 +106,11 @@ export class SnippetSync {
         return local;
       case "remote-wins":
         return remote;
-      case "newest-wins":
-        var localTime = new Date(local.updatedAt).getTime()
-        var remoteTime = new Date(remote.updatedAt).getTime()
-        return localTime >= remoteTime ? local : remote
+      case "newest-wins": {
+        const localTime = new Date(local.updatedAt).getTime();
+        const remoteTime = new Date(remote.updatedAt).getTime();
+        return localTime >= remoteTime ? local : remote;
+      }
       default:
         return local;
     }
@@ -133,24 +134,24 @@ export class SnippetSync {
       fs.mkdirSync(this.config.syncDir, { recursive: true });
     }
 
-    var manifest = this.readManifest() || {
+    const manifest = this.readManifest() || {
       lastSync: new Date(0).toISOString(),
       machineId: this.machineId,
       snippetHashes: {},
     };
 
     // Phase 1: Push local snippets to sync dir
-    var localSnippets = this.store.getAll();
-    for (var snippet of localSnippets) {
+    const localSnippets = this.store.getAll();
+    for (const snippet of localSnippets) {
       // Skip excluded tags
       if (this.config.excludeTags.some((t) => snippet.tags.includes(t))) {
         continue;
       }
 
-      var currentHash = this.hashSnippet(snippet);
-      var previousHash = manifest.snippetHashes[snippet.id];
+      const currentHash = this.hashSnippet(snippet);
+      const previousHash = manifest.snippetHashes[snippet.id];
 
-      if (currentHash != previousHash) {
+      if (currentHash !== previousHash) {
         this.exportSnippet(snippet);
         manifest.snippetHashes[snippet.id] = currentHash;
         report.pushed++;
@@ -158,19 +159,20 @@ export class SnippetSync {
     }
 
     // Phase 2: Pull remote snippets from sync dir
-    var syncFiles = fs.readdirSync(this.config.syncDir)
+    const syncFiles = fs
+      .readdirSync(this.config.syncDir)
       .filter((f) => f.endsWith(".json") && f !== SYNC_MANIFEST);
 
-    for (var file of syncFiles) {
-      var filePath = path.join(this.config.syncDir, file);
-      var remoteSnippet = this.importSnippet(filePath);
+    for (const file of syncFiles) {
+      const filePath = path.join(this.config.syncDir, file);
+      const remoteSnippet = this.importSnippet(filePath);
 
       if (!remoteSnippet) {
-        report.errors.push("Failed to parse: " + file);
+        report.errors.push(`Failed to parse: ${file}`);
         continue;
       }
 
-      var localSnippet = this.store.getById(remoteSnippet.id);
+      const localSnippet = this.store.getById(remoteSnippet.id);
 
       if (!localSnippet) {
         // New snippet from remote - import it
@@ -185,16 +187,16 @@ export class SnippetSync {
           });
           report.pulled++;
         } catch (err) {
-          report.errors.push("Failed to import " + remoteSnippet.id + ": " + err);
+          report.errors.push(`Failed to import ${remoteSnippet.id}: ${err}`);
         }
       } else {
         // Snippet exists locally - check for conflicts
-        var localHash = this.hashSnippet(localSnippet);
-        var remoteHash = this.hashSnippet(remoteSnippet);
+        const localHash = this.hashSnippet(localSnippet);
+        const remoteHash = this.hashSnippet(remoteSnippet);
 
-        if (localHash != remoteHash) {
-          var resolved = this.resolveConflict(localSnippet, remoteSnippet);
-          if (resolved.id == remoteSnippet.id && localHash != remoteHash) {
+        if (localHash !== remoteHash) {
+          const resolved = this.resolveConflict(localSnippet, remoteSnippet);
+          if (resolved.id === remoteSnippet.id && localHash !== remoteHash) {
             this.store.update({
               id: resolved.id,
               title: resolved.title,
@@ -221,7 +223,7 @@ export class SnippetSync {
    * Get the last sync time from the manifest.
    */
   getLastSyncTime(): string | null {
-    var manifest = this.readManifest();
+    const manifest = this.readManifest();
     return manifest?.lastSync || null;
   }
 
@@ -231,13 +233,14 @@ export class SnippetSync {
   cleanup(): number {
     if (!fs.existsSync(this.config.syncDir)) return 0;
 
-    var localIds = new Set(this.store.getAll().map((s) => s.id));
-    var syncFiles = fs.readdirSync(this.config.syncDir)
+    const localIds = new Set(this.store.getAll().map((s) => s.id));
+    const syncFiles = fs
+      .readdirSync(this.config.syncDir)
       .filter((f) => f.endsWith(".json") && f !== SYNC_MANIFEST);
 
     let removed = 0;
-    for (var file of syncFiles) {
-      var id = file.replace(".json", "");
+    for (const file of syncFiles) {
+      const id = file.replace(".json", "");
       if (!localIds.has(id)) {
         fs.unlinkSync(path.join(this.config.syncDir, file));
         removed++;
