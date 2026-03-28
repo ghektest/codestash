@@ -68,6 +68,7 @@ jobs:
       - name: Fix CI failures with Claude
         uses: anthropics/claude-code-action@v1
         with:
+          show_full_output: true
           prompt: |
             Failed CI Run: ${{ fromJSON(steps.failure_details.outputs.result).runUrl }}
             Failed Jobs: ${{ join(fromJSON(steps.failure_details.outputs.result).failedJobs.*.name, ', ') }}
