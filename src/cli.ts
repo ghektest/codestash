@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
-import chalk from "chalk";
-import ora from "ora";
 import fs from "node:fs";
 import path from "node:path";
-import { SnippetStore, getDefaultStore } from "./store.js";
+import chalk from "chalk";
+import { Command } from "commander";
+import ora from "ora";
 import { SnippetSearch } from "./search.js";
+import { getDefaultStore } from "./store.js";
 import { SnippetSync } from "./sync.js";
 import { detectLanguage, languageLabel } from "./types.js";
 import type { SyncConfig } from "./types.js";
@@ -35,12 +35,12 @@ program
   .action(async (content: string | undefined, options: any) => {
     const store = getDefaultStore();
 
-    var snippetContent = content;
+    let snippetContent = content;
 
     if (options.file) {
-      var filePath = path.resolve(options.file);
+      const filePath = path.resolve(options.file);
       if (!fs.existsSync(filePath)) {
-        console.error(chalk.red("File not found: " + filePath));
+        console.error(chalk.red(`File not found: ${filePath}`));
         process.exit(1);
       }
       snippetContent = fs.readFileSync(filePath, "utf-8");
@@ -51,12 +51,12 @@ program
       process.exit(1);
     }
 
-    var title = options.title || "Untitled snippet";
-    var language = options.lang || (options.file ? detectLanguage(options.file) : undefined);
-    var tags = options.tags ? options.tags.split(",").map((t: string) => t.trim()) : [];
+    const title = options.title || "Untitled snippet";
+    const language = options.lang || (options.file ? detectLanguage(options.file) : undefined);
+    const tags = options.tags ? options.tags.split(",").map((t: string) => t.trim()) : [];
 
     try {
-      var snippet = store.create({
+      const snippet = store.create({
         title: title,
         content: snippetContent,
         language: language,
@@ -75,7 +75,7 @@ program
         console.log(chalk.dim("  Tags: ") + snippet.tags.join(", "));
       }
     } catch (err) {
-      console.error(chalk.red("Failed to save snippet: " + err));
+      console.error(chalk.red(`Failed to save snippet: ${err}`));
       process.exit(1);
     }
   });
@@ -91,41 +91,39 @@ program
   .option("-T, --tags <tags>", "Filter by tags (comma-separated)")
   .option("-n, --limit <number>", "Max results", "10")
   .action(async (query: string, options: any) => {
-    var store = getDefaultStore();
-    var search = new SnippetSearch(store);
+    const store = getDefaultStore();
+    const search = new SnippetSearch(store);
 
-    var tags = options.tags ? options.tags.split(",").map((t: string) => t.trim()) : undefined;
+    const tags = options.tags ? options.tags.split(",").map((t: string) => t.trim()) : undefined;
 
-    var results = search.search({
+    const results = search.search({
       query,
       language: options.lang,
       tags,
-      limit: parseInt(options.limit, 10),
+      limit: Number.parseInt(options.limit, 10),
     });
 
-    if (results.length == 0) {
-      console.log(chalk.yellow("No snippets found for: " + query));
+    if (results.length === 0) {
+      console.log(chalk.yellow(`No snippets found for: ${query}`));
       return;
     }
 
-    console.log(chalk.bold("Found " + results.length + " snippet(s):\n"));
+    console.log(chalk.bold(`Found ${results.length} snippet(s):\n`));
 
-    for (var result of results) {
-      var s = result.snippet;
-      var score = Math.round((1 - result.score) * 100);
-      var langStr = s.language ? chalk.cyan("[" + languageLabel(s.language) + "]") : "";
-      var tagStr = s.tags.length > 0 ? chalk.dim(" #" + s.tags.join(" #")) : "";
+    for (const result of results) {
+      const s = result.snippet;
+      const score = Math.round((1 - result.score) * 100);
+      const langStr = s.language ? chalk.cyan(`[${languageLabel(s.language)}]`) : "";
+      const tagStr = s.tags.length > 0 ? chalk.dim(` #${s.tags.join(" #")}`) : "";
 
-      console.log(
-        chalk.bold(s.title) + " " + langStr + tagStr + chalk.dim(" (" + score + "% match)")
-      );
-      console.log(chalk.dim("  ID: " + s.id));
+      console.log(`${chalk.bold(s.title)} ${langStr}${tagStr}${chalk.dim(` (${score}% match)`)}`);
+      console.log(chalk.dim(`  ID: ${s.id}`));
       if (s.description) {
-        console.log(chalk.dim("  " + s.description));
+        console.log(chalk.dim(`  ${s.description}`));
       }
       // Show first 3 lines of content
-      var preview = s.content.split("\n").slice(0, 3).join("\n");
-      console.log(chalk.gray("  " + preview.replace(/\n/g, "\n  ")));
+      const preview = s.content.split("\n").slice(0, 3).join("\n");
+      console.log(chalk.gray(`  ${preview.replace(/\n/g, "\n  ")}`));
       console.log();
     }
   });
@@ -140,26 +138,26 @@ program
   .option("-l, --lang <language>", "Filter by language")
   .option("-n, --limit <number>", "Max results", "25")
   .action(async (options: any) => {
-    var store = getDefaultStore();
-    var snippets = store.list({
+    const store = getDefaultStore();
+    const snippets = store.list({
       language: options.lang,
-      limit: parseInt(options.limit, 10),
+      limit: Number.parseInt(options.limit, 10),
     });
 
-    if (snippets.length == 0) {
+    if (snippets.length === 0) {
       console.log(chalk.yellow("No snippets found. Add one with: codestash add"));
       return;
     }
 
-    console.log(chalk.bold("Snippets (" + snippets.length + "):\n"));
+    console.log(chalk.bold(`Snippets (${snippets.length}):\n`));
 
-    for (var s of snippets) {
-      var langStr = s.language ? chalk.cyan("[" + languageLabel(s.language) + "]") : "";
-      var tagStr = s.tags.length > 0 ? chalk.dim(" #" + s.tags.join(" #")) : "";
-      var date = new Date(s.updatedAt).toLocaleDateString();
+    for (const s of snippets) {
+      const langStr = s.language ? chalk.cyan(`[${languageLabel(s.language)}]`) : "";
+      const tagStr = s.tags.length > 0 ? chalk.dim(` #${s.tags.join(" #")}`) : "";
+      const date = new Date(s.updatedAt).toLocaleDateString();
 
       console.log(
-        chalk.dim(s.id) + "  " + chalk.bold(s.title) + " " + langStr + tagStr + chalk.dim(" " + date)
+        `${chalk.dim(s.id)}  ${chalk.bold(s.title)} ${langStr}${tagStr}${chalk.dim(` ${date}`)}`,
       );
     }
   });
@@ -173,11 +171,11 @@ program
   .argument("<id>", "Snippet ID")
   .option("--raw", "Output raw content only (for piping)")
   .action(async (id: string, options: any) => {
-    var store = getDefaultStore();
-    var snippet = store.getById(id);
+    const store = getDefaultStore();
+    const snippet = store.getById(id);
 
     if (!snippet) {
-      console.error(chalk.red("Snippet not found: " + id));
+      console.error(chalk.red(`Snippet not found: ${id}`));
       process.exit(1);
     }
 
@@ -206,13 +204,13 @@ program
   .alias("rm")
   .argument("<id>", "Snippet ID")
   .action(async (id: string) => {
-    var store = getDefaultStore();
-    var deleted = store.delete(id);
+    const store = getDefaultStore();
+    const deleted = store.delete(id);
 
     if (deleted) {
-      console.log(chalk.green("Snippet deleted: " + id));
+      console.log(chalk.green(`Snippet deleted: ${id}`));
     } else {
-      console.error(chalk.red("Snippet not found: " + id));
+      console.error(chalk.red(`Snippet not found: ${id}`));
       process.exit(1);
     }
   });
@@ -224,25 +222,29 @@ program
   .command("sync")
   .description("Sync snippets with a shared directory")
   .option("-d, --dir <path>", "Sync directory path")
-  .option("--strategy <strategy>", "Conflict strategy: local-wins, remote-wins, newest-wins", "newest-wins")
+  .option(
+    "--strategy <strategy>",
+    "Conflict strategy: local-wins, remote-wins, newest-wins",
+    "newest-wins",
+  )
   .option("--dry-run", "Show what would be synced without making changes")
   .action(async (options: any) => {
-    var store = getDefaultStore();
+    const store = getDefaultStore();
 
-    var syncDir = options.dir || path.join(require("node:os").homedir(), ".codestash", "sync");
+    const syncDir = options.dir || path.join(require("node:os").homedir(), ".codestash", "sync");
 
-    var syncConfig: SyncConfig = {
+    const syncConfig: SyncConfig = {
       syncDir,
       autoSync: false,
       conflictStrategy: options.strategy,
       excludeTags: ["private", "local-only"],
     };
 
-    var syncer = new SnippetSync(store, syncConfig);
-    var spinner = ora("Syncing snippets...").start();
+    const syncer = new SnippetSync(store, syncConfig);
+    const spinner = ora("Syncing snippets...").start();
 
     try {
-      var report = syncer.sync();
+      const report = syncer.sync();
       spinner.succeed("Sync complete!");
 
       console.log(chalk.dim("  Pushed: ") + report.pushed);
@@ -251,12 +253,12 @@ program
 
       if (report.errors.length > 0) {
         console.log(chalk.yellow("\n  Warnings:"));
-        for (var err of report.errors) {
-          console.log(chalk.yellow("    - " + err));
+        for (const err of report.errors) {
+          console.log(chalk.yellow(`    - ${err}`));
         }
       }
     } catch (err) {
-      spinner.fail("Sync failed: " + err);
+      spinner.fail(`Sync failed: ${err}`);
       process.exit(1);
     }
   });
@@ -268,15 +270,15 @@ program
   .command("stats")
   .description("Show snippet collection statistics")
   .action(async () => {
-    var store = getDefaultStore();
-    var count = store.count();
-    var tags = store.getAllTags();
-    var snippets = store.getAll();
+    const store = getDefaultStore();
+    const count = store.count();
+    const tags = store.getAllTags();
+    const snippets = store.getAll();
 
     // Count by language
-    var langCounts: Record<string, number> = {};
-    for (var s of snippets) {
-      var lang = s.language || "unknown";
+    const langCounts: Record<string, number> = {};
+    for (const s of snippets) {
+      const lang = s.language || "unknown";
       langCounts[lang] = (langCounts[lang] || 0) + 1;
     }
 
@@ -285,9 +287,9 @@ program
     console.log(chalk.dim("Unique tags: ") + tags.length);
     console.log(chalk.dim("Languages:"));
 
-    var sortedLangs = Object.entries(langCounts).sort((a, b) => b[1] - a[1]);
-    for (var [lang, langCount] of sortedLangs) {
-      console.log("  " + languageLabel(lang) + ": " + langCount);
+    const sortedLangs = Object.entries(langCounts).sort((a, b) => b[1] - a[1]);
+    for (const [lang, langCount] of sortedLangs) {
+      console.log(`  ${languageLabel(lang)}: ${langCount}`);
     }
 
     if (tags.length > 0) {

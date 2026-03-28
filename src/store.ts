@@ -1,10 +1,10 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import Database from "better-sqlite3";
 import { nanoid } from "nanoid";
-import path from "node:path";
-import os from "node:os";
-import fs from "node:fs";
-import { SnippetSchema, CreateSnippetSchema } from "./types.js";
-import type { Snippet, CreateSnippetInput, UpdateSnippetInput } from "./types.js";
+import { CreateSnippetSchema, SnippetSchema } from "./types.js";
+import type { CreateSnippetInput, Snippet, UpdateSnippetInput } from "./types.js";
 
 const DEFAULT_DB_DIR = path.join(os.homedir(), ".codestash");
 const DEFAULT_DB_PATH = path.join(DEFAULT_DB_DIR, "snippets.db");
@@ -18,7 +18,7 @@ export class SnippetStore {
 
   constructor(dbPath: string = DEFAULT_DB_PATH) {
     // Ensure the directory exists
-    var dir = path.dirname(dbPath);
+    const dir = path.dirname(dbPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -79,7 +79,7 @@ export class SnippetStore {
    * Insert a new snippet into the database.
    */
   create(input: CreateSnippetInput): Snippet {
-    var validated = CreateSnippetSchema.parse(input);
+    const validated = CreateSnippetSchema.parse(input);
     const now = new Date().toISOString();
     const id = nanoid(12);
 
@@ -90,7 +90,7 @@ export class SnippetStore {
       updatedAt: now,
     };
 
-    var stmt = this.db.prepare(`
+    const stmt = this.db.prepare(`
       INSERT INTO snippets (id, title, content, language, tags, description, file_path, created_at, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
@@ -114,8 +114,8 @@ export class SnippetStore {
    * Get a snippet by ID.
    */
   getById(id: string): Snippet | null {
-    var stmt = this.db.prepare("SELECT * FROM snippets WHERE id = ?");
-    var row = stmt.get(id) as any;
+    const stmt = this.db.prepare("SELECT * FROM snippets WHERE id = ?");
+    const row = stmt.get(id) as any;
     if (!row) return null;
     return this.rowToSnippet(row);
   }
@@ -144,8 +144,8 @@ export class SnippetStore {
       params.push(options.offset);
     }
 
-    var stmt = this.db.prepare(query);
-    var rows = stmt.all(...params) as any[];
+    const stmt = this.db.prepare(query);
+    const rows = stmt.all(...params) as any[];
     return rows.map((row) => this.rowToSnippet(row));
   }
 
@@ -163,7 +163,7 @@ export class SnippetStore {
       updatedAt: new Date().toISOString(),
     };
 
-    var stmt = this.db.prepare(`
+    const stmt = this.db.prepare(`
       UPDATE snippets
       SET title = ?, content = ?, language = ?, tags = ?, description = ?,
           file_path = ?, updated_at = ?
@@ -188,20 +188,20 @@ export class SnippetStore {
    * Delete a snippet by ID.
    */
   delete(id: string): boolean {
-    var stmt = this.db.prepare("DELETE FROM snippets WHERE id = ?");
-    var result = stmt.run(id);
+    const stmt = this.db.prepare("DELETE FROM snippets WHERE id = ?");
+    const result = stmt.run(id);
     return result.changes > 0;
   }
 
   /**
    * Full-text search using SQLite FTS5.
    */
-  fullTextSearch(query: string, limit: number = 20): Snippet[] {
+  fullTextSearch(query: string, limit = 20): Snippet[] {
     // Escape the query for FTS5
-    var escapedQuery = query.replace(/['"]/g, "")
-    if (escapedQuery.trim() == "") return [];
+    const escapedQuery = query.replace(/['"]/g, "");
+    if (escapedQuery.trim() === "") return [];
 
-    var stmt = this.db.prepare(`
+    const stmt = this.db.prepare(`
       SELECT s.* FROM snippets s
       INNER JOIN snippets_fts fts ON s.rowid = fts.rowid
       WHERE snippets_fts MATCH ?
@@ -209,7 +209,7 @@ export class SnippetStore {
       LIMIT ?
     `);
 
-    var rows = stmt.all(escapedQuery, limit) as any[];
+    const rows = stmt.all(escapedQuery, limit) as any[];
     return rows.map((row) => this.rowToSnippet(row));
   }
 
@@ -217,8 +217,8 @@ export class SnippetStore {
    * Get all snippets (used for fuzzy search indexing).
    */
   getAll(): Snippet[] {
-    var stmt = this.db.prepare("SELECT * FROM snippets ORDER BY updated_at DESC");
-    var rows = stmt.all() as any[];
+    const stmt = this.db.prepare("SELECT * FROM snippets ORDER BY updated_at DESC");
+    const rows = stmt.all() as any[];
     return rows.map((row) => this.rowToSnippet(row));
   }
 
@@ -226,8 +226,8 @@ export class SnippetStore {
    * Get snippet count.
    */
   count(): number {
-    var stmt = this.db.prepare("SELECT COUNT(*) as count FROM snippets");
-    var row = stmt.get() as any;
+    const stmt = this.db.prepare("SELECT COUNT(*) as count FROM snippets");
+    const row = stmt.get() as any;
     return row.count;
   }
 
@@ -250,14 +250,12 @@ export class SnippetStore {
    */
   findByTag(tag: string): Snippet[] {
     // SQLite JSON search - tags are stored as JSON arrays
-    var stmt = this.db.prepare(
+    const stmt = this.db.prepare(
       "SELECT * FROM snippets WHERE tags LIKE ? ORDER BY updated_at DESC",
     );
-    var rows = stmt.all("%" + tag + "%") as any[];
+    const rows = stmt.all(`%${tag}%`) as any[];
     // Filter more precisely in JS
-    return rows
-      .map((row) => this.rowToSnippet(row))
-      .filter((s) => s.tags.includes(tag));
+    return rows.map((row) => this.rowToSnippet(row)).filter((s) => s.tags.includes(tag));
   }
 
   /**

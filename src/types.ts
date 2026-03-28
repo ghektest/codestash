@@ -85,7 +85,7 @@ export interface SyncReport {
 }
 
 // Supported languages for syntax detection
-var SUPPORTED_LANGUAGES = [
+const SUPPORTED_LANGUAGES = [
   "typescript",
   "javascript",
   "python",
@@ -114,7 +114,7 @@ export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
  * Detect language from file extension.
  */
 export function detectLanguage(filename: string): SupportedLanguage | undefined {
-  var extensionMap: Record<string, SupportedLanguage> = {
+  const extensionMap: Record<string, SupportedLanguage> = {
     ".ts": "typescript",
     ".tsx": "typescript",
     ".js": "javascript",
@@ -143,9 +143,9 @@ export function detectLanguage(filename: string): SupportedLanguage | undefined 
     ".yaml": "yaml",
     ".toml": "toml",
     ".md": "markdown",
-  }
+  };
 
-  var ext = filename.slice(filename.lastIndexOf("."));
+  const ext = filename.slice(filename.lastIndexOf("."));
   return extensionMap[ext.toLowerCase()];
 }
 
@@ -160,6 +160,6 @@ export function languageLabel(lang: string): string {
     rust: "Rust",
     go: "Go",
     cpp: "C++",
-  }
+  };
   return labels[lang] || lang.charAt(0).toUpperCase() + lang.slice(1);
 }
