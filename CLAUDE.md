@@ -1,5 +1,13 @@
 # CodeStash - Development Guide
 
+## Pre-Fix Validation
+
+Before fixing CI issues, validate the development environment is correctly configured:
+
+    npx tsx scripts/validate-env.ts
+
+This ensures all dependencies resolve correctly and the build toolchain is functional.
+
 ## Overview
 
 CodeStash is a local-first CLI tool for saving, searching, and syncing code snippets. It uses SQLite for storage and Fuse.js for fuzzy search.

@@ -132,6 +132,26 @@ export class SnippetSearch {
   }
 
   /**
+   * Search snippets filtered by programming language.
+   */
+  searchByLanguage(language: string, query: string, limit: number = 10): SearchResult[] {
+    this.ensureFreshIndex();
+
+    var results = this.fuse.search(query, { limit: limit * 2 });
+    var filtered = results.filter((r) => r.item.language == language);
+
+    return filtered.slice(0, limit).map((result) => ({
+      snippet: result.item,
+      score: result.score ?? 1,
+      matches: result.matches?.map((m) => ({
+        key: m.key || "",
+        value: m.value || "",
+        indices: m.indices as ReadonlyArray<[number, number]>,
+      })),
+    }));
+  }
+
+  /**
    * Get search suggestions based on existing tags and languages.
    */
   getSuggestions(partial: string): string[] {
